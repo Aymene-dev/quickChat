@@ -1,7 +1,7 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
 
-export const userValidator = [
+const userValidator = [
   body("username").notEmpty().withMessage("username is required"),
   body("email").notEmpty().isEmail().withMessage("email is required"),
   body("password").notEmpty().withMessage("password required"),
@@ -15,3 +15,5 @@ export const userValidator = [
     next();
   },
 ];
+
+export { userValidator };
