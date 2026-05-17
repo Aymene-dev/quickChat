@@ -1,5 +1,10 @@
 import User from "../models/user.model.js";
 import { hashPassword, comparePassword } from "../utils/password.utils.js";
+import RefreshToken from "../models/refreshToken.model.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/jwt.utils.js";
 
 const register = async (req, res) => {
   try {
@@ -35,14 +40,25 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "user can not be found" });
+      return res.status(400).json({ message: "user could not be found" });
     }
     if (!(await comparePassword(password, user.passwordHash))) {
-      return res.status(401).json({ message: "password incorrect" });
+      return res.status(401).json({ message: "incorrect password" });
     }
-    return res.status(200).json({ message: "acccess granted" });
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    await RefreshToken.create({
+      _userId: user._id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+    });
+
+    return res
+      .status(200)
+      .json({ message: "acccess granted", accessToken, refreshToken });
   } catch (error) {
-    res.status(500).json({ message: "server error" });
+    res.status(500).json({ message: "server error" + error.message });
   }
 };
 

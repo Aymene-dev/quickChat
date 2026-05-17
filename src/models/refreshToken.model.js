@@ -15,3 +15,7 @@ const refreshTokenSchema = mongoose.Schema({
     required: true,
   },
 });
+
+const RefreshToken = mongoose.model("RefreshToken", refreshTokenSchema);
+
+export default RefreshToken;
