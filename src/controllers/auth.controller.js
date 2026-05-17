@@ -62,4 +62,25 @@ const login = async (req, res) => {
   }
 };
 
-export { register, login };
+const renewAccessToken = async (req, res) => {
+  const { refreshToken } = req.body;
+  try {
+    const decoded = jwt.validate(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+    );
+
+    const tokenInDb = await RefreshToken.findOne({ token: refreshToken });
+    if (!tokenInDb) {
+      return res.status(401).json({ message: "refresh token not in db" });
+    }
+    const newAccessToken = generateAccessToken(decoded._userId);
+    return res
+      .status(200)
+      .json({ message: "access token renewed", newAccessToken });
+  } catch (error) {
+    return res.status(401).json({ message: "refresh token expired" });
+  }
+};
+
+export { register, login, renewAccessToken };
