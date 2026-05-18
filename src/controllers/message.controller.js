@@ -2,6 +2,7 @@ import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import ConversationMember from "../models/conversationMember.model.js";
 import User from "../models/user.model.js";
+import { login } from "./auth.controller.js";
 
 const sendMessage = async (req, res) => {
   try {
@@ -54,6 +55,12 @@ const deleteMessage = async (req, res) => {
       return res
         .status(403)
         .json({ message: "only the sender can delete a message" });
+    }
+    //check if the message is already deleted
+    if (message.isDeleted) {
+      return res
+        .status(400)
+        .json({ message: "the message has already been deleted" });
     }
     //update the message
     message.isDeleted = true;
