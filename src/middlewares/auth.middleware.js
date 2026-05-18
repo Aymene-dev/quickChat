@@ -11,7 +11,7 @@ const checkAccessToken = (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    req._userId = decoded._userId;
+    req._userId = decoded.userId;
     next();
   } catch (error) {
     return res.status(401).json({ message: "access token expired " + error });

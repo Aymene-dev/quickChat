@@ -6,12 +6,14 @@ import dbConnection from "./db/index.js";
 dbConnection();
 
 import authRoutes from "./routes/auth.routes.js";
+import convRoutes from "./routes/conversations.routes.js";
 
 const app = express();
 const port = process.env.PORT;
 
 app.use(express.json());
 app.use("/auth", authRoutes);
+app.use("/conversation", convRoutes);
 app.get("/", (req, res) => {
   res.send("test");
 });
