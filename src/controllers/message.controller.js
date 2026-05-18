@@ -1,0 +1,153 @@
+import Message from "../models/message.model.js";
+import Conversation from "../models/conversation.model.js";
+import ConversationMember from "../models/conversationMember.model.js";
+import User from "../models/user.model.js";
+
+const sendMessage = async (req, res) => {
+  try {
+    const { convId, content } = req.body;
+    const senderId = req._userId;
+    //get the conversation
+    const conv = await Conversation.findOne({
+      _id: convId,
+    });
+    if (!conv) {
+      return res
+        .status(400)
+        .json({ message: "the conversation does not exist" });
+    }
+    //check if the sender is part of the conversation
+    const isSenderInConv = await ConversationMember.findOne({
+      _convId: convId,
+      _userId: senderId,
+    });
+    if (!isSenderInConv) {
+      return res
+        .status(400)
+        .json({ message: "the user is not part of the conversation" });
+    }
+    await Message.create({
+      _convId: convId,
+      _userId: senderId,
+      content,
+      isDeleted: false,
+    });
+    return res.status(200).json({ message: "message sent" });
+  } catch (error) {
+    return res.status(500).json({ message: "server error " + error.message });
+  }
+};
+
+const deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.body;
+    const senderId = req._userId;
+    //get the message
+    const message = await Message.findOne({
+      _id: messageId,
+    });
+    if (!message) {
+      return res.status(400).json({ message: "message does not exist" });
+    }
+    //check if the provided id is the real sender
+    if (message._userId.toString() !== senderId) {
+      return res
+        .status(403)
+        .json({ message: "only the sender can delete a message" });
+    }
+    //update the message
+    message.isDeleted = true;
+    await message.save();
+    return res.status(200).json({ message: "message deleted" });
+  } catch (error) {
+    return res.status(500).json({ message: "server error " + error.message });
+  }
+};
+
+const updateMessage = async (req, res) => {
+  try {
+    const { messageId, content } = req.body;
+    const senderId = req._userId;
+    //get the message
+    const message = await Message.findOne({
+      _id: messageId,
+    });
+    if (!message) {
+      return res.status(400).json({ message: "message does not exist" });
+    }
+    //check if the provided id is the real sender
+    if (message._userId.toString() !== senderId) {
+      return res
+        .status(403)
+        .json({ message: "only the sender can delete a message" });
+    }
+    if (content !== "") {
+      message.content = content;
+      await message.save();
+      return res.status(200).json({ message: "message updated" });
+    } else {
+      return res.status(403).json({ message: "message can not be empty" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "server error " + error.message });
+  }
+};
+
+const getMessages = async (req, res) => {
+  try {
+    const { convId } = req.body;
+    const requesterId = req._userId;
+    const requester = await User.findOne({
+      _id: requesterId,
+    });
+
+    //check if the conversation exists
+    const conversation = await Conversation.findOne({
+      _id: convId,
+    });
+    if (!conversation) {
+      return res
+        .status(400)
+        .json({ message: "the conversation does not exist" });
+    }
+    //check if the requester is part of the conversation
+    const convMember = await ConversationMember.findOne({
+      _convId: conversation._id,
+      _userId: requester._id,
+    });
+    if (!convMember) {
+      return res
+        .status(403)
+        .json({ message: "the user is not part of the conversation" });
+    }
+    //get all the messages from the conversation
+    const messages = await Message.find({
+      _convId: convId,
+    });
+    const result = await Promise.all(
+      messages.map(async (message) => {
+        if (message.isDeleted === false) {
+          let sender;
+          if (message._userId.toString() === requesterId) {
+            sender = "You";
+          } else {
+            sender = await User.findOne({
+              _id: message._userId,
+            });
+            sender = sender.username;
+          }
+          return {
+            sender,
+            content: message.content,
+            sentAt: message.updatedAt,
+          };
+        }
+      }),
+    );
+    return res.status(200).json(result.filter(Boolean));
+  } catch (error) {
+    return res.status(500).json({ message: "server error " + error.message });
+  }
+};
+
+export { sendMessage, deleteMessage, updateMessage, getMessages };
