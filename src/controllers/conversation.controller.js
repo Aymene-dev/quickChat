@@ -130,7 +130,7 @@ const getConversation = async (req, res) => {
     _userId: userId,
   });
   if (!convIds) {
-    res.status(400).json({ message: "no message found" });
+    res.status(400).json({ message: "no conversation found" });
   }
 
   convIds.map((conv) => {
