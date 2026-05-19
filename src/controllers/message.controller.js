@@ -112,10 +112,12 @@ const getMessages = async (req, res) => {
     const conversation = await Conversation.findOne({
       _id: convId,
     });
-    if (!conversation) {
+    if (!conversation || conversation.isDeleted) {
       return res
         .status(400)
-        .json({ message: "the conversation does not exist" });
+        .json({
+          message: "the conversation does not exist (or has been deleted)",
+        });
     }
     //check if the requester is part of the conversation
     const convMember = await ConversationMember.findOne({
