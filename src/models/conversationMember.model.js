@@ -17,6 +17,14 @@ const converssationMemberSchema = mongoose.Schema(
       enum: ["participant", "admin"],
       default: "participant",
     },
+    isConvDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    isMemberDeleted: {
+      type: Boolean,
+      default: false,
+    },
     lastReadAt: {
       type: Date,
     },
