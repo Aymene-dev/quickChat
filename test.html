@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <body>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      const socket = io("http://localhost:3000", {
+        auth: {
+          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTBjNzQ2MTQzOGIyNGM1NTAxOTVkZTUiLCJpYXQiOjE3NzkyOTg3MjUsImV4cCI6MTc3OTMwNTkyNX0.qjqEVPG1OK9HqyyBtLLRHM6qbDcvSJj_05BRgGg2BJk",
+        },
+      });
+
+      socket.emit("joinConversation", "6a0c74e3438b24c550195de9");
+
+      socket.on("newMessage", (message) => {
+        console.log("message received:", message);
+      });
+    </script>
+  </body>
+</html>

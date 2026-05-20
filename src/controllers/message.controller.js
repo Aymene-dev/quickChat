@@ -3,6 +3,7 @@ import Conversation from "../models/conversation.model.js";
 import ConversationMember from "../models/conversationMember.model.js";
 import User from "../models/user.model.js";
 import { login } from "./auth.controller.js";
+import { getIO } from "../utils/socket.utils.js";
 
 const sendMessage = async (req, res) => {
   try {
@@ -32,6 +33,12 @@ const sendMessage = async (req, res) => {
       _userId: senderId,
       content,
       isDeleted: false,
+    });
+    const io = getIO();
+    io.to(convId).emit("newMessage", {
+      sender: req._userId,
+      content,
+      sentAt: new Date(),
     });
     return res.status(200).json({ message: "message sent" });
   } catch (error) {
@@ -113,11 +120,9 @@ const getMessages = async (req, res) => {
       _id: convId,
     });
     if (!conversation || conversation.isDeleted) {
-      return res
-        .status(400)
-        .json({
-          message: "the conversation does not exist (or has been deleted)",
-        });
+      return res.status(400).json({
+        message: "the conversation does not exist (or has been deleted)",
+      });
     }
     //check if the requester is part of the conversation
     const convMember = await ConversationMember.findOne({

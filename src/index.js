@@ -8,9 +8,17 @@ dbConnection();
 import authRoutes from "./routes/auth.routes.js";
 import convRoutes from "./routes/conversations.routes.js";
 import messageRoutes from "./routes/message.routes.js";
+import { initSocket } from "./utils/socket.utils.js";
+import http from "http";
 
 const app = express();
 const port = process.env.PORT;
+
+const server = http.createServer(app);
+initSocket(server);
+server.listen(port, () => {
+  console.log(`server running on port ${port}`);
+});
 
 app.use(express.json());
 app.use("/auth", authRoutes);
