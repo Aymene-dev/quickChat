@@ -2,21 +2,38 @@ import Conversation from "../models/conversation.model.js";
 import ConversationMember from "../models/conversationMember.model.js";
 import User from "../models/user.model.js";
 
+const getPrivateConversation = async (userId1, userId2) => {
+  const convsOfUser1 = await ConversationMember.find({
+    _userId: userId1,
+  }).distinct("_convId");
+
+  const convsOfUser2 = await ConversationMember.find({
+    _userId: userId2,
+  }).distinct("_convId");
+
+  const commonConvIds = convsOfUser1.filter((id) =>
+    convsOfUser2.some((id2) => id2.toString() === id.toString()),
+  );
+
+  const privateConv = await Conversation.findOne({
+    _id: { $in: commonConvIds },
+    type: "private",
+  });
+
+  return privateConv;
+};
+
 const createConversation = async (req, res) => {
   try {
     const { userIds, name, avatar } = req.body;
     const type = userIds.length > 1 ? "group" : "private";
     if (type === "private") {
-      const existingConv = await ConversationMember.findOne({
-        _userId: req._userId,
-        _convId: {
-          $in: await ConversationMember.find({ _userId: userIds[0] }).distinct(
-            "_convId",
-          ),
-        },
-      });
-      if (existingConv) {
-        return res.status(400).json({ message: "conversation already exists" });
+      const doesConvExist = await getPrivateConversation(
+        req._userId,
+        userIds[0],
+      );
+      if (doesConvExist) {
+        return res.status(403).json({ message: "conversation already exists" });
       }
     }
     const allUserIds = [...userIds, req._userId];
@@ -165,22 +182,61 @@ const deleteConversation = async (req, res) => {
 
 const getConversation = async (req, res) => {
   const userId = req._userId;
-  const convIds = await ConversationMember.find({
+  const convs = await ConversationMember.find({
     _userId: userId,
+    isConvDeleted: false,
+    isMemberDeleted: false,
   });
-  if (!convIds) {
+  if (!convs) {
     res.status(400).json({ message: "no conversation found" });
   }
 
-  convIds.map((conv) => {
-    console.log("conversation: " + conv._convId);
-  });
-  return res.status(200).json({ message: "conversations found" });
+  const convsInfo = await Promise.all(
+    convs.map(async (conv) => {
+      const conversationFromDb = await Conversation.findOne({
+        _id: conv._convId,
+      });
+      return conversationFromDb;
+    }),
+  );
+
+  convsInfo.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  const interlocutors = (
+    await Promise.all(
+      convsInfo.map(async (conv, index) => {
+        if (conv.type !== "private") return null;
+        const convMembers = await ConversationMember.find({
+          _convId: conv._id,
+        });
+        const members = await Promise.all(
+          convMembers.map(async (member) => {
+            if (member._userId.toString() === userId) return null;
+            const user = await User.findOne({
+              _id: member._userId,
+            });
+
+            return {
+              _id: user._id,
+              username: user.username,
+              avatar: user.avatar,
+              _convId: conv._id,
+            };
+          }),
+        );
+        return members.filter(Boolean);
+      }),
+    )
+  )
+    .filter(Boolean)
+    .flat();
+
+  return res.status(200).json({ convsInfo, interlocutors });
 };
 
 const getMembersOfConv = async (req, res) => {
   try {
-    const { convId } = req.body;
+    const { convId } = req.query;
     const requesterId = req._userId;
     const convMember = await ConversationMember.findOne({
       _convId: convId,
