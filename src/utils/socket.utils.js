@@ -13,12 +13,9 @@ const initSocket = (server) => {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     console.log(decoded);
     socket._userId = decoded.userId
-    
-    console.log("user connected: " + socket._userId);
 
     socket.on("joinConversation", (convId) => {
       socket.join(convId);
-      console.log("user joined the conversation: " + convId);
     });
 
     socket.on("leaveConversation", (convId) => {
@@ -26,7 +23,7 @@ const initSocket = (server) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("user disconnected: " + socket.id);
+      console.log("user disconnected: " + socket._userId);
     });
   });
 };

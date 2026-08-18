@@ -9,6 +9,7 @@ dbConnection();
 import authRoutes from "./routes/auth.routes.js";
 import convRoutes from "./routes/conversations.routes.js";
 import messageRoutes from "./routes/message.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import { initSocket } from "./utils/socket.utils.js";
 import http from "http";
 
@@ -30,6 +31,7 @@ app.use(
 app.use("/auth", authRoutes);
 app.use("/conversation", convRoutes);
 app.use("/message", messageRoutes);
+app.use("/users", userRoutes);
 app.get("/", (req, res) => {
   res.send("test");
 });

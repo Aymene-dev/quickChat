@@ -34,11 +34,17 @@ const sendMessage = async (req, res) => {
       content,
       isDeleted: false,
     });
+    conv.updatedAt = Date.now();
+    await conv.save();
+    const sender = await User.findOne({
+      _id: senderId,
+    }).select("_id username avatar");
     const io = getIO();
     io.to(convId).emit("newMessage", {
-      sender: req._userId,
+      sender: sender.username,
+      senderId: sender._id,
       content,
-      sentAt: new Date(),
+      updatedAt: new Date(),
     });
     return res.status(200).json({ message: "message sent" });
   } catch (error) {
@@ -109,7 +115,7 @@ const updateMessage = async (req, res) => {
 
 const getMessages = async (req, res) => {
   try {
-    const { convId } = req.body;
+    const { convId } = req.query;
     const requesterId = req._userId;
     const requester = await User.findOne({
       _id: requesterId,
@@ -153,7 +159,7 @@ const getMessages = async (req, res) => {
           return {
             sender,
             content: message.content,
-            sentAt: message.updatedAt,
+            updatedAt: message.updatedAt,
           };
         }
       }),
