@@ -7,6 +7,8 @@ import { getIO } from "../utils/socket.utils.js";
 
 const sendMessage = async (req, res) => {
   try {
+    console.log("req body : ", req.body);
+
     const { convId, content } = req.body;
     const senderId = req._userId;
     //get the conversation
@@ -115,7 +117,11 @@ const updateMessage = async (req, res) => {
 
 const getMessages = async (req, res) => {
   try {
+    console.log("req query", req.query);
+
     const { convId } = req.query;
+    console.log("conv id : ", convId);
+
     const requesterId = req._userId;
     const requester = await User.findOne({
       _id: requesterId,
@@ -130,7 +136,6 @@ const getMessages = async (req, res) => {
         message: "the conversation does not exist (or has been deleted)",
       });
     }
-    //check if the requester is part of the conversation
     const convMember = await ConversationMember.findOne({
       _convId: conversation._id,
       _userId: requester._id,

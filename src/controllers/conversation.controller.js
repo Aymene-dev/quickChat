@@ -51,7 +51,7 @@ const createConversation = async (req, res) => {
         }),
       ),
     );
-    return res.status(200).json({ message: "conversation created" });
+    return res.status(200).json({ conversation: newConv });
   } catch (error) {
     return res.status(500).json({ message: "server error " + error.message });
   }

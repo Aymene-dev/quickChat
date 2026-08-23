@@ -5,6 +5,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/jwt.utils.js";
+import jwt from "jsonwebtoken";
 
 const register = async (req, res) => {
   try {
@@ -65,20 +66,20 @@ const login = async (req, res) => {
 const renewAccessToken = async (req, res) => {
   const { refreshToken } = req.body;
   try {
-    const decoded = jwt.validate(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET,
-    );
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
     const tokenInDb = await RefreshToken.findOne({ token: refreshToken });
     if (!tokenInDb) {
       return res.status(401).json({ message: "refresh token not in db" });
     }
-    const newAccessToken = generateAccessToken(decoded._userId);
+    const newAccessToken = generateAccessToken(decoded.userId);
+
     return res
       .status(200)
-      .json({ message: "access token renewed", newAccessToken });
+      .json({ message: "access token renewed", accessToken: newAccessToken });
   } catch (error) {
+    console.log("error : ", error.message);
+
     return res.status(401).json({ message: "refresh token expired" });
   }
 };
