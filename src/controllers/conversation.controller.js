@@ -25,8 +25,9 @@ const getPrivateConversation = async (userId1, userId2) => {
 
 const createConversation = async (req, res) => {
   try {
-    const { userIds, name, avatar } = req.body;
-    const type = userIds.length > 1 ? "group" : "private";
+    console.log(req);
+
+    const { userIds, name, avatar, type } = req.body;
     if (type === "private") {
       const doesConvExist = await getPrivateConversation(
         req._userId,
