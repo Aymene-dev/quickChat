@@ -172,35 +172,38 @@ const getMessages = async (req, res) => {
 };
 
 const getLastMessage = async (req, res) => {
-  const { convId } = req.query;
-  const requesterId = req._userId;
-  const requester = await User.findOne({
-    _id: requesterId,
-  });
-
-  //check if the conversation exists
-  const conversation = await Conversation.findOne({
-    _id: convId,
-  });
-  if (!conversation || conversation.isDeleted) {
-    return res.status(400).json({
-      message: "the conversation does not exist (or has been deleted)",
+  try {
+    const { convId } = req.query;
+    const requesterId = req._userId;
+    const requester = await User.findOne({
+      _id: requesterId,
     });
-  }
-  const convMember = await ConversationMember.findOne({
-    _convId: conversation._id,
-    _userId: requester._id,
-  });
-  if (!convMember) {
-    return res
-      .status(403)
-      .json({ message: "the user is not part of the conversation" });
-  }
-  const lastMessage = await Message.findOne({ _convId: convId }).sort({
-    _id: -1,
-  });
 
-  return res.status(200).json(lastMessage);
+    const conversation = await Conversation.findOne({
+      _id: convId,
+    });
+    if (!conversation || conversation.isDeleted) {
+      return res.status(400).json({
+        message: "the conversation does not exist (or has been deleted)",
+      });
+    }
+    const convMember = await ConversationMember.findOne({
+      _convId: conversation._id,
+      _userId: requester._id,
+    });
+    if (!convMember) {
+      return res
+        .status(403)
+        .json({ message: "the user is not part of the conversation" });
+    }
+    const lastMessage = await Message.findOne({ _convId: convId }).sort({
+      _id: -1,
+    });
+
+    return res.status(200).json(lastMessage);
+  } catch (error) {
+    return res.status(500).json({ message: "error: " + error.message });
+  }
 };
 
 export {
