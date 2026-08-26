@@ -7,8 +7,6 @@ import { getIO } from "../utils/socket.utils.js";
 
 const sendMessage = async (req, res) => {
   try {
-    console.log("req body : ", req.body);
-
     const { convId, content } = req.body;
     const senderId = req._userId;
     //get the conversation
@@ -47,6 +45,10 @@ const sendMessage = async (req, res) => {
       senderId: sender._id,
       content,
       updatedAt: new Date(),
+    });
+    const members = await ConversationMember.find({ _convId: convId });
+    members.forEach((member) => {
+      io.to(member._userId.toString()).emit("convUpdated", { convId });
     });
     return res.status(200).json({ message: "message sent" });
   } catch (error) {
@@ -199,7 +201,9 @@ const getLastMessage = async (req, res) => {
     const lastMessage = await Message.findOne({ _convId: convId }).sort({
       _id: -1,
     });
-
+    if (!lastMessage) {
+      return res.status(200).json({ lastMessage: { data: { content: null } } });
+    }
     return res.status(200).json(lastMessage);
   } catch (error) {
     return res.status(500).json({ message: "error: " + error.message });
