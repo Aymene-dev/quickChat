@@ -197,7 +197,9 @@ const getConversation = async (req, res) => {
       const conversationFromDb = await Conversation.findOne({
         _id: conv._convId,
       });
-      return conversationFromDb;
+      const convObj = conversationFromDb.toObject();
+      convObj.userRole = conv.role;
+      return convObj;
     }),
   );
 
@@ -260,6 +262,8 @@ const getMembersOfConv = async (req, res) => {
           return {
             _userId: user._id,
             username: user.username,
+            avatar: user.avatar,
+            role: member.role,
           };
         }
       }),
