@@ -71,34 +71,42 @@ const addMemberToConversation = async (req, res) => {
         .status(403)
         .json({ message: "only admin can perform this operation" });
     }
-    //check if the conversation already exists
-    const conv = await Conversation.findOne({
-      _id: convId,
-    });
+
+    const conv = await Conversation.findOne({ _id: convId });
     if (!conv) {
       return res
         .status(404)
         .json({ message: "the conversation does not exist" });
     }
-    //check if the conversation is a group
+
     if (conv.type === "private") {
-      res.status(400).json({ message: "you can only add members to groups." });
+      return res
+        .status(400)
+        .json({ message: "you can only add members to groups." });
     }
-    //check if the user is already in the conversation
+
     const existingUser = await ConversationMember.findOne({
       _convId: convId,
       _userId: memberId,
     });
+
     if (existingUser) {
+      if (existingUser.isMemberDeleted) {
+        existingUser.isMemberDeleted = false;
+        await existingUser.save();
+        return res.status(200).json({ message: "user re-added" });
+      }
       return res
         .status(400)
         .json({ message: "the user is already in this conversation" });
     }
+
     await ConversationMember.create({
       _convId: convId,
       _userId: memberId,
       role: "participant",
     });
+
     return res.status(200).json({ message: "user added" });
   } catch (error) {
     return res.status(500).json({ message: "server error " + error.message });
