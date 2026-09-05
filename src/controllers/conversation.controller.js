@@ -120,7 +120,10 @@ const deleteMemberFromConv = async (req, res) => {
       _convId: convId,
       _userId: req._userId,
     });
-    if (!requester || requester.role !== "admin") {
+    const isSelf = memberId === req._userId;
+    if (!requester || (requester.role !== "admin" && !isSelf)) {
+      console.log(memberId);
+      console.log(req._userId);
       return res
         .status(403)
         .json({ message: "only admin can perform this operation" });
