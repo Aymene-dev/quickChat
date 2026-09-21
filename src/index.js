@@ -25,7 +25,7 @@ server.listen(port, () => {
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://quick-chat-client-woad-eight.vercel.app",
+    origin:["https://quick-chat-client-woad-eight.vercel.app","http://localhost:5173"],
   }),
 );
 app.use("/auth", authRoutes);
